@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+table {
+  border-collapse: collapse;
+  width: 50%;
+  border: 1px solid white;
+  border-radius: 25px;
+  overflow: hidden;
+}
+
+.page-title {
+  text-align: center;
+  color: white;
+  font-size: 44px;
+  margin-top: 20px;
+}
+
+.section-title {
+  text-align: center;
+  color: white;
+  font-size: 32px;
+  margin-top: 40px;
+}
+
+.btn-primary {
+  background-color: lightblue;
+  border: 1px solid white;
+  color: black;
+  padding: 10px;
+  margin: 20px;
+  cursor: pointer;
+}
+
+.btn-add {
+  background-color: lightblue;
+  border: 1px solid white;
+  color: black;
+  padding: 10px;
+  border-radius: 25px;
+  width: 30%;
+  cursor: pointer;
+}
+
+.btn-edit {
+  background-color: lightblue;
+  border: 1px solid white;
+  color: black;
+  padding: 10px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.btn-save {
+  background-color: green;
+  border: 1px solid white;
+  color: white;
+  padding: 5px;
+  width: 100%;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background-color: red;
+  border: 1px solid white;
+  color: white;
+  padding: 5px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.hobby-container {
+  width: 80%;
+  margin: 0 auto 20px auto;
+  color: white;
+  padding: 10px;
+  border: 1px solid white;
+  border-radius: 15px;
+}
+
+.hobby-container h3 {
+  margin-top: 0;
+}
+
+.hobby-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hobby-pill {
+  background-color: #333;
+  padding: 5px 10px;
+  border-radius: 10px;
+}
+
+.user-table {
+  margin: 20px auto;
+  color: white;
+  width: 80%;
+  border: 1px solid white;
+  border-radius: 25px;
+  overflow: hidden;
+  border-collapse: collapse;
+}
+
+.table-cell {
+  padding: 10px;
+  border: 1px solid white;
+}
+
+.table-input {
+  width: 100%;
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+.add-form {
+  width: 30%;
+  margin: 20px auto;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid white;
+  border-radius: 25px;
+  padding: 20px;
+}
+
+.add-form input {
+  padding: 8px;
+  border-radius: 5px;
+  border: none;
+}
+
+.row-default {
+  background-color: transparent;
+  color: white;
+  cursor: pointer;
+}
+
+.row-selected {
+  background-color: #f0f0f0;
+  color: black;
+  cursor: pointer;
+}
+
+.row-editing {
+  cursor: default;
+}
