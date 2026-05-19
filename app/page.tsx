@@ -2,15 +2,20 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { User } from "./types/user";
-import { fetchUsers } from "./services/api";
+import {
+  createUser,
+  fetchUsers,
+  syncUsersFromFeed,
+  updateUser,
+} from "./services/api";
 
 export default function Home() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [selectedUid, setSelectedUid] = useState<string | number | null>(null);
-  const [editingUid, setEditingUid] = useState<string | number | null>(null);
-  const [editFormData, setEditFormData] = useState<any>({});
+  const [selectedUid, setSelectedUid] = useState<string | null>(null);
+  const [editingUid, setEditingUid] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState<User | null>(null);
   const [newUser, setNewUser] = useState({
     name: "",
     birth_date: "",
@@ -22,32 +27,61 @@ export default function Home() {
       postal_code: "",
     },
   });
+  const [newUserHobbiesInput, setNewUserHobbiesInput] = useState("");
 
-
-  const fetchData = async () => {
+  const loadUsers = async () => {
     setLoading(true);
     setError("");
     try {
       const data = await fetchUsers();
       setUsers(data);
     } catch (err) {
-      setError("Failed to fetch users");
+      setError(err instanceof Error ? err.message : "Failed to load users");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddUser = () => {
-    const newId = Date.now().toString();
-    setUsers((prev) => [...prev, { ...newUser, uid: newId } as User]);
+  const handleRefresh = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await syncUsersFromFeed();
+      setUsers(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to sync from feed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setNewUser({
-      name: "",
-      birth_date: "",
-      hobbies: [],
-      country: "",
-      address: { street: "", city: "", postal_code: "" },
-    });
+  const handleAddUser = async () => {
+    if (!newUser.name.trim()) {
+      setError("Name is required");
+      return;
+    }
+
+    setError("");
+    try {
+      const created = await createUser({
+        ...newUser,
+        hobbies: newUserHobbiesInput
+          .split(",")
+          .map((hobby) => hobby.trim())
+          .filter(Boolean),
+      });
+      setUsers((prev) => [...prev, created]);
+      setNewUser({
+        name: "",
+        birth_date: "",
+        hobbies: [],
+        country: "",
+        address: { street: "", city: "", postal_code: "" },
+      });
+      setNewUserHobbiesInput("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add user");
+    }
   };
 
   const startEditing = (user: User) => {
@@ -55,20 +89,29 @@ export default function Home() {
     setEditFormData({ ...user, address: { ...user.address } });
   };
 
-  const saveEditing = () => {
-    setUsers((prev) => 
-      prev.map((u) => u.uid === editingUid ? (editFormData as User) : u)
-    );
-    setEditingUid(null);
+  const saveEditing = async () => {
+    if (!editFormData) return;
+
+    setError("");
+    try {
+      const updated = await updateUser(editFormData);
+      setUsers((prev) =>
+        prev.map((u) => (u.uid === updated.uid ? updated : u)),
+      );
+      setEditingUid(null);
+      setEditFormData(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save user");
+    }
   };
 
   const cancelEditing = () => {
     setEditingUid(null);
+    setEditFormData(null);
   };
 
-
   useEffect(() => {
-    fetchData();
+    loadUsers();
   }, []);
 
   const hobbyCounts = useMemo(() => {
@@ -83,10 +126,10 @@ export default function Home() {
     return counts;
   }, [users]);
 
-  return (
+return (
     <div>
       <h1 className="page-title">User Management</h1>
-      <button onClick={fetchData} className="btn-primary">Refresh</button>
+      <button onClick={handleRefresh} className="btn-primary">Refresh</button>
       
       <div className="hobby-container">
         <h3>Hobby Statistics:</h3>
@@ -119,6 +162,7 @@ export default function Home() {
           <tbody>
             {users.map((user) => {
               const isEditing = editingUid === user.uid;
+              const editRowData = isEditing ? editFormData : null;
               const rowClass = isEditing 
                 ? 'row-editing' 
                 : (selectedUid === user.uid ? 'row-selected' : 'row-default');
@@ -128,28 +172,28 @@ export default function Home() {
                   onClick={() => !isEditing && setSelectedUid(user.uid)}
                   className={rowClass}>
                 
-                {isEditing ? (
+                {editRowData ? (
                   <>
                     <td className="table-cell">
-                      <input type="text" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} className="table-input" />
+                      <input type="text" value={editRowData.name} onChange={(e) => setEditFormData((prev) => { if (!prev) return prev; return { ...prev, name: e.target.value }; })} className="table-input" />
                     </td>
                     <td className="table-cell">
-                      <input type="date" value={editFormData.birth_date} onChange={e => setEditFormData({...editFormData, birth_date: e.target.value})} className="table-input" />
+                      <input type="date" value={editRowData.birth_date} onChange={(e) => setEditFormData((prev) => { if (!prev) return prev; return { ...prev, birth_date: e.target.value }; })} className="table-input" />
                     </td>
                     <td className="table-cell">
-                      <input type="text" value={editFormData.hobbies.join(", ")} onChange={e => setEditFormData({...editFormData, hobbies: e.target.value.split(", ").map((h: string) => h.trim())})} className="table-input" />
+                      <input type="text" value={editRowData.hobbies.join(", ")} onChange={(e) => setEditFormData((prev) => { if (!prev) return prev; return { ...prev, hobbies: e.target.value.split(",").map((h: string) => h.trim()) }; })} className="table-input" />
                     </td>
                     <td className="table-cell">
-                      <input type="text" value={editFormData.country} onChange={e => setEditFormData({...editFormData, country: e.target.value})} className="table-input" />
+                      <input type="text" value={editRowData.country} onChange={(e) => setEditFormData((prev) => { if (!prev) return prev; return { ...prev, country: e.target.value }; })} className="table-input" />
                     </td>
                     <td className="table-cell">
-                      <input type="text" value={editFormData.address.street} onChange={e => setEditFormData({...editFormData, address: {...editFormData.address, street: e.target.value}})} className="table-input" />
+                      <input type="text" value={editRowData.address.street} onChange={(e) => setEditFormData((prev) => { if (!prev) return prev; return { ...prev, address: { ...prev.address, street: e.target.value } }; })} className="table-input" />
                     </td>
                     <td className="table-cell">
-                      <input type="text" value={editFormData.address.city} onChange={e => setEditFormData({...editFormData, address: {...editFormData.address, city: e.target.value}})} className="table-input" />
+                      <input type="text" value={editRowData.address.city} onChange={(e) => setEditFormData((prev) => { if (!prev) return prev; return { ...prev, address: { ...prev.address, city: e.target.value } }; })} className="table-input" />
                     </td>
                     <td className="table-cell">
-                      <input type="text" value={editFormData.address.postal_code} onChange={e => setEditFormData({...editFormData, address: {...editFormData.address, postal_code: e.target.value}})} className="table-input" />
+                      <input type="text" value={editRowData.address.postal_code} onChange={(e) => setEditFormData((prev) => { if (!prev) return prev; return { ...prev, address: { ...prev.address, postal_code: e.target.value } }; })} className="table-input" />
                     </td>
                     <td className="table-cell">
                       <button onClick={(e) => { e.stopPropagation(); saveEditing(); }} className="btn-save">Save</button>
@@ -183,7 +227,7 @@ export default function Home() {
       <div className="add-form">
         <input type="text" placeholder="Name" value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})} />
         <input type="date" placeholder="Birth Date" value={newUser.birth_date} onChange={(e) => setNewUser({...newUser, birth_date: e.target.value})} />
-        <input type="text" placeholder="Hobbies (comma separated)" value={newUser.hobbies.join(", ")} onChange={(e) => setNewUser({...newUser, hobbies: e.target.value.split(", ").map((hobby) => hobby.trim())})} />
+        <input type="text" placeholder="Hobbies (comma separated)" value={newUserHobbiesInput} onChange={(e) => setNewUserHobbiesInput(e.target.value)} />
         <input type="text" placeholder="Country" value={newUser.country} onChange={(e) => setNewUser({...newUser, country: e.target.value})} />
         <input type="text" placeholder="Street" value={newUser.address.street} onChange={(e) => setNewUser({...newUser, address: {...newUser.address, street: e.target.value}})} />
         <input type="text" placeholder="City" value={newUser.address.city} onChange={(e) => setNewUser({...newUser, address: {...newUser.address, city: e.target.value}})} />
