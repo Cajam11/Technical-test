@@ -66,10 +66,19 @@ table {
   cursor: pointer;
 }
 
-.btn-edit {
+.btn-edit{
   background-color: lightblue;
   border: 1px solid white;
   color: black;
+  padding: 10px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.btn-delete {
+  background-color: red;
+  border: 1px solid white;
+  color: white;
   padding: 10px;
   width: 100%;
   cursor: pointer;

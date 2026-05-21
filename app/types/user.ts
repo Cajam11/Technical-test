@@ -9,4 +9,5 @@ export interface User {
         city: string;
         postal_code: string;
     }
+    locally_modified?: boolean;
 }

@@ -20,6 +20,14 @@ export async function fetchUsers(): Promise<User[]> {
   return (await response.json()) as User[];
 }
 
+export async function fetchHobbyCounts(): Promise<Array<{ hobby: string; count: number }>> {
+  const response = await fetch("/api/users/hobby-counts");
+  if (!response.ok) {
+    await parseError(response, "Failed to load hobby counts");
+  }
+  return (await response.json()) as Array<{ hobby: string; count: number }>;
+}
+
 export async function syncUsersFromFeed(): Promise<User[]> {
   const response = await fetch("/api/users/sync", { method: "POST" });
   if (!response.ok) {
@@ -58,4 +66,13 @@ export async function updateUser(user: User): Promise<User> {
     await parseError(response, "Failed to update user");
   }
   return (await response.json()) as User;
+}
+
+export async function deleteUser(uid: string): Promise<void> {
+  const response = await fetch(`/api/users/${encodeURIComponent(uid)}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    await parseError(response, "Failed to delete user");
+  }
 }

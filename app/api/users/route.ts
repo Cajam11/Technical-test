@@ -18,6 +18,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as Omit<User, "uid"> & { uid?: string };
+
+    if (!body || typeof body.name !== "string" || !body.name.trim()) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    }
+
+    if (!Array.isArray(body.hobbies) || !body.hobbies.every((h) => typeof h === "string")) {
+      return NextResponse.json({ error: "Hobbies must be an array of strings" }, { status: 400 });
+    }
     const uid = body.uid ?? crypto.randomUUID();
 
     const user: User = {
@@ -27,6 +35,7 @@ export async function POST(request: Request) {
       hobbies: body.hobbies ?? [],
       country: body.country,
       address: body.address,
+      locally_modified: true,
     };
 
     const created = await createUser(user);
