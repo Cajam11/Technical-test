@@ -56,6 +56,13 @@ table {
   cursor: pointer;
 }
 
+.btn-primary:disabled {
+  background-color: #cccccc;
+  border: 1px solid #999999;
+  color: #666666;
+  cursor: not-allowed;
+};
+
 .btn-add {
   background-color: lightblue;
   border: 1px solid white;

@@ -152,7 +152,7 @@ export default function Home() {
   return (
     <div>
       <h1 className="page-title">User Management</h1>
-      <button onClick={handleRefresh} className="btn-primary">
+      <button onClick={handleRefresh} disabled={loading} className="btn-primary">
         Refresh
       </button>
 
